@@ -1,30 +1,36 @@
 import { EventEmitter } from "events";
-import { createTracing } from "trace_events";
 import { setInterval } from "timers/promises";
-import { MEMORY_ERRORS, MEMORY_MESSAGES } from "./src/constants";
-import { ICallback } from "./src/types";
+import {
+  InMemoryMemoizeDefaultOptions,
+  MEMORY_ERRORS,
+  MEMORY_MESSAGES,
+} from "./src/constants";
+import { ICallback, IInMemoryMemoiseOptions } from "./src/types";
 import {} from "stream/promises";
-import * as fs from "fs";
 import { Readable } from "stream";
 import { log } from "./src/utils";
+import { writeFileStream } from "./src/streams";
 
 export class InMemoryMemoize<T> extends EventEmitter {
   static instances: Set<string> = new Set();
   memoryName: string;
-  ttl: number = 15000;
+  ttl?: number;
   store: Map<Symbol, T>;
   cronController: AbortController;
-  constructor(name: string) {
+  constructor(name: string, options?: IInMemoryMemoiseOptions) {
     super();
     if (InMemoryMemoize.instances.has(name)) {
       this.emit("error", new Error(MEMORY_ERRORS.ALREADY_EXISTS));
     }
+    if (options) Object.assign(InMemoryMemoizeDefaultOptions, options);
+    const { logFile, ttl } = options || {};
     this.cronController = new AbortController();
     InMemoryMemoize.instances.add(name);
     this.memoryName = name;
     this.store = new Map();
-    // this.cron(this.flushAll);
-    this.logEntries();
+    this.ttl = ttl;
+    ttl && this.cron(this.flushAll);
+    logFile && this.logEntries(logFile);
     log.info(`memoization memory ${name} created`);
   }
   add = (key: string, value: T) => {
@@ -37,6 +43,9 @@ export class InMemoryMemoize<T> extends EventEmitter {
   };
   has = (key: string) => {
     return this.store.has(Symbol.for(key));
+  };
+  get = (key: string) => {
+    return this.store.get(Symbol.for(key));
   };
   cron = async (cb: ICallback) => {
     const { ttl, cronController } = this;
@@ -55,15 +64,9 @@ export class InMemoryMemoize<T> extends EventEmitter {
 
   cancelCron = () => this.cronController.abort();
 
-  logEntries = () => {
-    this.on("data", (data, stream: Readable) => {
-      console.log("new entry", data);
-      const path = `${process.cwd()}/log.txt`;
-      const writeStream = fs.createWriteStream(path, {
-        flags: "a",
-        encoding: "utf-8",
-      });
-      stream.pipe(writeStream);
+  logEntries = (path: string) => {
+    this.on("data", (_data, stream: Readable) => {
+      stream.pipe(writeFileStream(path));
     });
   };
 }

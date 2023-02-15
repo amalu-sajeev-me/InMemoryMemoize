@@ -1,3 +1,5 @@
+import { IInMemoryMemoiseOptions } from "./types";
+
 export const enum MEMORY_ERRORS {
   ALREADY_EXISTS = "a memory with same name already exists",
 }
@@ -13,3 +15,9 @@ export const enum COLOR_CODES {
   BLUE = "\x1b[34m%s\x1b[0m",
   YELLOW = "\x1b[33m%s\x1b[0m",
 }
+
+export const InMemoryMemoizeDefaultOptions: IInMemoryMemoiseOptions = {
+  logFile: "store.log",
+  logInfo: true,
+  ttl: 15000,
+};
