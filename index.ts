@@ -8,7 +8,7 @@ import * as fs from "fs";
 import { Readable } from "stream";
 import { log } from "./src/utils";
 
-class InMemoryMemoize<T> extends EventEmitter {
+export class InMemoryMemoize<T> extends EventEmitter {
   static instances: Set<string> = new Set();
   memoryName: string;
   ttl: number = 15000;
