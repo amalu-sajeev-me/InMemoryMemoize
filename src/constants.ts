@@ -21,3 +21,8 @@ export const InMemoryMemoizeDefaultOptions: IInMemoryMemoiseOptions = {
   logInfo: true,
   ttl: 15000,
 };
+
+export const enum MEMORY_EVENTS {
+  DATA = "data",
+  ERROR = "error",
+}

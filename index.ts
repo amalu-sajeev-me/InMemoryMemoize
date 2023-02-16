@@ -3,6 +3,7 @@ import { setInterval } from "timers/promises";
 import {
   InMemoryMemoizeDefaultOptions,
   MEMORY_ERRORS,
+  MEMORY_EVENTS,
   MEMORY_MESSAGES,
 } from "./src/constants";
 import { ICallback, IInMemoryMemoiseOptions } from "./src/types";
@@ -20,14 +21,14 @@ export class InMemoryMemoize<T> extends EventEmitter {
   constructor(name: string, options?: IInMemoryMemoiseOptions) {
     super();
     if (InMemoryMemoize.instances.has(name)) {
-      this.emit("error", new Error(MEMORY_ERRORS.ALREADY_EXISTS));
+      this.emit(MEMORY_EVENTS.ERROR, new Error(MEMORY_ERRORS.ALREADY_EXISTS));
     }
     if (options) Object.assign(InMemoryMemoizeDefaultOptions, options);
     const { logFile, ttl } = options || {};
     this.cronController = new AbortController();
     InMemoryMemoize.instances.add(name);
     this.memoryName = name;
-    this.store = new Map();
+    this.store = new Map<Symbol, T>();
     this.ttl = ttl;
     ttl && this.cron(this.flushAll);
     logFile && this.logEntries(logFile);
@@ -38,7 +39,7 @@ export class InMemoryMemoize<T> extends EventEmitter {
     this.store.set(keySymbol, value);
     const data = Buffer.from(JSON.stringify(value));
     const stream = Readable.from(data, { emitClose: true });
-    this.emit("data", value, stream);
+    this.emit(MEMORY_EVENTS.DATA, value, stream);
     return { ...this, stream };
   };
   has = (key: string) => {
@@ -53,7 +54,7 @@ export class InMemoryMemoize<T> extends EventEmitter {
     for await (const startTime of setInterval(ttl, Date.now(), { signal }))
       (() => {
         cb();
-        console.log(startTime, MEMORY_MESSAGES.FLUSH_ALL);
+        log.log(startTime, MEMORY_MESSAGES.FLUSH_ALL);
       })();
   };
 
@@ -65,7 +66,7 @@ export class InMemoryMemoize<T> extends EventEmitter {
   cancelCron = () => this.cronController.abort();
 
   logEntries = (path: string) => {
-    this.on("data", (_data, stream: Readable) => {
+    this.on(MEMORY_EVENTS.DATA, (_data, stream: Readable) => {
       stream.pipe(writeFileStream(path));
     });
   };
