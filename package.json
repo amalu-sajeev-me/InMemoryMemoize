@@ -1,6 +1,6 @@
 {
   "name": "inmemorymemoize",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "nodejs InMemoryMemoize",
   "main": "index.js",
   "scripts": {
@@ -12,8 +12,8 @@
     "type": "git",
     "url": "git+https://github.com/amalu-sajeev-me/InMemoryMemoize.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["memoization", "memory", "node memoization", "in-memory", "in memory memoization", "memoisation"],
+  "author": "Amalu Sajeev",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/amalu-sajeev-me/InMemoryMemoize/issues"
